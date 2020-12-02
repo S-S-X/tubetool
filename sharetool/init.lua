@@ -62,6 +62,28 @@ local tool = metatool:register_tool('sharetool', sharetool)
 -- Create namespace containing sharetool runtime data and functions
 tool:ns({
 	shared_account = metatool.settings('sharetool', 'shared_account'),
+	player_exists = function(player)
+		player = type(player) == "userdata" and player:get_player_name() or player
+		return type(player) == "string" and minetest.get_auth_handler().get_auth(player) ~= nil
+	end,
+	set_area_owner = function(self, id, owner, player)
+		--luacheck: globals areas
+		if not self.player_exists(owner) then
+			minetest.chat_send_player(player:get_player_name(), S('Player %s not found.', owner))
+			return false
+		end
+		id = tonumber(id)
+		if id == nil or not areas.areas[id] then
+			minetest.chat_send_player(player:get_player_name(), id == nil
+				and S('Invalid area id.')
+				or S('Area %d not found from database.', id)
+			)
+			return false
+		end
+		areas.areas[id].owner = owner
+		areas:save()
+		return true
+	end,
 	mark_shared = function(meta)
 		meta:set_int('sharetool_shared_node', 1)
 	end,
@@ -75,6 +97,7 @@ tool:ns({
 		return allowed
 	end,
 	set_travelnet_owner = function(self, pos, player, owner)
+		--luacheck: globals travelnet
 		owner = owner or self.shared_account
 		local name = player:get_player_name()
 		local meta = minetest.get_meta(pos)
@@ -117,8 +140,6 @@ tool:ns({
 		travelnet.targets[owner][network][station] = {pos=pos, timestamp=os.time()}
 		-- Update formspec to reflect changes
 		travelnet.update_formspec(pos, owner, nil)
-		-- Mark node as shared
-		self.mark_shared(meta)
 		-- Save travelnet database
 		travelnet.save_data()
 		return true
@@ -130,3 +151,4 @@ tool:load_node_definition(dofile(modpath .. '/nodes/book.lua'))
 tool:load_node_definition(dofile(modpath .. '/nodes/travelnet.lua'))
 tool:load_node_definition(dofile(modpath .. '/nodes/missions.lua'))
 tool:load_node_definition(dofile(modpath .. '/nodes/mapserver.lua'))
+tool:load_node_definition(dofile(modpath .. '/nodes/any.lua'))

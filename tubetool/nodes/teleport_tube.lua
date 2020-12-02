@@ -16,9 +16,8 @@ local ns = metatool.ns('tubetool')
 
 local tp_tube_form_index = {}
 
-metatool.form.register_form(
-	'tubetool:teleport_tube_list',
-	function(player, data)
+metatool.form.register_form('tubetool:teleport_tube_list', {
+	on_create = function(player, data)
 		local list = ""
 		for _,tube in ipairs(data.tubes) do
 			list = list .. ",1" ..
@@ -26,15 +25,17 @@ metatool.form.register_form(
 				"," .. minetest.formspec_escape(string.format("%d,%d,%d",tube.pos.x,tube.pos.y,tube.pos.z)) ..
 				"," .. (tube.can_receive and "yes" or "no")
 		end
-		return "formspec_version[3]size[8,10;]label[0.1,0.5;" ..
+		local form = metatool.form.Form({ width = 8, height = 10 })
+		form:raw("label[0.1,0.5;" ..
 			"Found " .. #data.tubes .. " teleport tubes, channel: " ..
 			minetest.formspec_escape(data.channel) .. "]" ..
 			"button_exit[0,9;4,1;wp;Waypoint]" ..
 			"button_exit[4,9;4,1;exit;Exit]" ..
 			"tablecolumns[indent;text,width=15;text,width=15;text,align=center]" ..
-			"table[0,1;8,8;items;1,Distance,Location,Receive" .. list .. ";]"
+			"table[0,1;8,8;items;1,Distance,Location,Receive" .. list .. ";]")
+		return form
 	end,
-	function(player, fields, data)
+	on_receive = function(player, fields, data)
 		local name = player:get_player_name()
 		local evt = minetest.explode_table_event(fields.items)
 		if tp_tube_form_index[name] and (evt.type == "DCL" or (fields.wp and fields.quit)) then
@@ -51,7 +52,7 @@ metatool.form.register_form(
 			tp_tube_form_index[name] = evt.row > 1 and evt.row - 1 or nil
 		end
 	end
-)
+})
 
 local definition = {
 	name = 'teleport_tube',

@@ -6,7 +6,6 @@ files["**/nodes/*.lua"] = { ignore = {"212"} }
 
 globals = {
 	"metatool",
-	"travelnet",
 }
 
 read_globals = {
@@ -15,9 +14,12 @@ read_globals = {
 	"vector",
 	"ItemStack",
 	"Settings",
+	"VoxelManip",
 	"dump",
 	-- Mods
 	"default",
+	"areas",
+	"travelnet",
 	"pipeworks",
 	"technic",
 	"signs",
